@@ -1,0 +1,13 @@
+actors issue: https://github.com/mozilla/rust/issues/3573
+tasks and comm: http://static.rust-lang.org/doc/master/tutorial-tasks.html
+
+12/11
+bjz:
+-abstract away raw ports/channels
+-maintain perf; inlining and monomorphization will help
+-generic client/server by bjz: https://gist.github.com/bjz/244842e47f59f3bda380
+-modeled after gen_server from Erlang
+-trying to implement gen_fsm/gen_event, not sure it'll work with Rust semantics
+-"Concurrent Programming in ML", CML part of SML-NJ
+-Rust primitives more similar to CML than Erlang
+-but Rust doesn't implement all CML primitives (yet?)
