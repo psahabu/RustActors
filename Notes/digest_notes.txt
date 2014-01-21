@@ -1,0 +1,6 @@
+1/21
+Bounded/unbounded channels seem to be a major issue.
+	stronger arguments for bounded
+libgreen (user threads)/libnative (OS threads) split from libstd
+	don't think this influences where the actor library goes
+Avoid foo/foo-opt issues
