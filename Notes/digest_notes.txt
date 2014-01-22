@@ -4,3 +4,19 @@ Bounded/unbounded channels seem to be a major issue.
 libgreen (user threads)/libnative (OS threads) split from libstd
 	don't think this influences where the actor library goes
 Avoid foo/foo-opt issues
+Macros can have multiple items, but only one statement
+Many different kinds of channels (to be implemented)
+	Chan trait, unbounded:
+		throws errors for potential overflow
+		multi-producer
+	SharedChan, from Chan (could just be Chan): multi-consumer
+	UniqueChan, from Chan: single-consumer
+	SyncChan, bounded:
+		blocking send
+		returning try_send: success/full/closed return
+		multi-producer, single-consumer
+Code reviewing: https://github.com/mozilla/rust/wiki/Note-code-review
+gdb to get error backtraces, break on rust_fail
+Rust Continuous Integration: http://www.rust-ci.org/help/
+pointers are implicitly copyable unless destructor is created
+	i.e. original pointer is invalid when copied into another struct
