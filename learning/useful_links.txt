@@ -1,3 +1,2 @@
 http://static.rust-lang.org/doc/master/tutorial.html
 http://words.steveklabnik.com/a-30-minute-introduction-to-rust
-

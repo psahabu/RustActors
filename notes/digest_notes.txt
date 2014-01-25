@@ -20,3 +20,15 @@ gdb to get error backtraces, break on rust_fail
 Rust Continuous Integration: http://www.rust-ci.org/help/
 pointers are implicitly copyable unless destructor is created
 	i.e. original pointer is invalid when copied into another struct
+
+1/24
+Channel debate is nearly resolved.
+Focus of rust is on single consumer message passing (Vol 43, Issue 114)
+	issue taken with no shared memory, points to Arc/MutexArc
+	i.e. concurrent hash table split into shards
+	Wants concurrency to be based on multiple-consumer/producer queue
+	response (Vol 43, Issue 115)
+		it's the easiest conceptually, concurrency pkg in future
+		difficulty with proposed queue is select on multiple consumers
+
+

@@ -1,0 +1,4 @@
+Complete Rust tutorial: http://static.rust-lang.org/doc/master/tutorial.html
+Write up Project Euler problems: http://projecteuler.net/problems
+Write up concurrency examples
+Investigate Akka implementation
