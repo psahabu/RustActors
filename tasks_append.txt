@@ -1,0 +1,2 @@
+Implement pseudo-Actors
+Look for high level Actor design decisions (Akka, Erlang, etc)
