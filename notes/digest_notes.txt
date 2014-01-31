@@ -1,3 +1,18 @@
+1/31
+Compile-time function execution/evaluation (43,137,1)
+	improves perf by doing known computations at compile-time
+	also a pseudo-replacement for macros
+	competing idea of hygeinic macros (43,140,3)
+Faster task inter-communication (43,140,4)
+	channels were somewhat slow, want them to be faster
+	Disruptor implementation (http://lmax-exchange.github.io/disruptor/)
+Multiplex io Erlang style: ioserver (43,141,4)
+	centralize io loops into a separate thread
+	pipe-based "wakeup" from this
+Futures in Rust (43,147,1)
+	explicit asynchronicity, can create synchronicity
+	exploring cloning a stream
+
 1/27
 (43,122,1)
 proposal to unify native/green tasks:
@@ -15,7 +30,7 @@ ZMQ (inter-task communication): http://zeromq.org/
 Some issues with rustpkg, may be deprecated soon (why?)
 
 1/25
-Actor model mentioned as useful, something Erlang/OTP-like (43, 117)
+Actor model mentioned as useful, something Erlang/OTP-like (43,117)
 Performance concerns about actors (43, 118, 3)
 Two different kinds of tasks:
 	Native tasks - analogous to OS threads
