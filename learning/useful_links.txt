@@ -1,3 +1,11 @@
+Tutorial
 http://static.rust-lang.org/doc/master/tutorial.html
+
+Ownership and Arc
 http://words.steveklabnik.com/a-30-minute-introduction-to-rust
+
+Cheat Sheet
 http://static.rust-lang.org/doc/master/complement-cheatsheet.html
+
+Fork-join within Actors
+http://smallcultfollowing.com/babysteps/blog/2013/06/11/data-parallelism-in-rust/
