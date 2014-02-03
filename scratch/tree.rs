@@ -38,10 +38,12 @@ fn task_sum<T: Num+Send>(v: T, l: ~Tree<T>, r: ~Tree<T>, max: int) -> T {
 	let (rport, rchan): (Port<T>, Chan<T>) = Chan::new();
 
 	spawn(proc() {
+		println!("left thread launched");
 		let sum = sum(l, max);
 		lchan.send(sum);
 	});
 	spawn(proc() {
+		println!("right thread launched");
 		let sum = sum(r, max);
 		rchan.send(sum);
 	});
