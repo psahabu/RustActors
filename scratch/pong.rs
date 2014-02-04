@@ -14,18 +14,21 @@ impl Clone for Paddle {
 	}
 }
 
-fn pong(paddles: ~[Paddle], num: uint) {
+fn pong(paddles: ~[Paddle]) {
 	let mut sources = ~[];
 	let mut drains = ~[];
+	let mut count = 0;
 	for _ in paddles.iter() {
-		let (drain, source): (Port<bool>, SharedChan<bool>) = SharedChan::new();
+		let (drain, source): (Port<()>, SharedChan<()>) = SharedChan::new();
 		sources.push(source);
 		drains.push(drain);
+		count += 1;
 	}
 
 	for d in drains.move_iter() {
 		let s = sources.clone();
 		let p = paddles.clone();
+		let num = count;
 		spawn(proc() {
 			d.recv();
 			let mut rng = rand::rng();
@@ -34,13 +37,13 @@ fn pong(paddles: ~[Paddle], num: uint) {
 				println!("game over");
 			} else {
 				println!("{} has the puck", p[to].name);
-				s[to].send(true);
+				s[to].send(());
 			}
 		});
 	}
 
 	// start game
-	sources[0].send(true);
+	sources[0].send(());
 }
 
 fn main() {
@@ -49,5 +52,5 @@ fn main() {
 		Paddle {name: ~"Bertha"},
 		Paddle {name: ~"Carol"}
 	];
-	pong(paddles, 3);
+	pong(paddles);
 }
