@@ -1,6 +1,9 @@
+2/3
+Unifying closure and proc declaration (44,20,1), waiting on trait closures
+New I/O always returns an IoResult<T>, really Result<T, IoError> (44,22,1)
+
 2/1
 Proposal to slightly tweak parametric polymorphism declarations (44,8,4)
-
 
 1/31
 Compile-time function execution/evaluation (43,137,1)

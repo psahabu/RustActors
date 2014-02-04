@@ -1,9 +1,7 @@
-Email Dan, Eric about ugrad symposium; basically need an abstract
 ugrad symposium application due 2/24: https://expo.uw.edu/expo/apply/312
 
 Complete Rust tutorial: http://static.rust-lang.org/doc/master/tutorial.html
 Write up Project Euler problems: http://projecteuler.net/problems
-Implement pseudo-Actors (hard coded)
 Write up other concurrency examples
 
 Look for high level Actor design decisions (Akka, Erlang, etc)

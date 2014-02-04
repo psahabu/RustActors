@@ -19,7 +19,7 @@ fn pong(paddles: ~[Paddle]) {
 	let mut drains = ~[];
 	let mut count = 0;
 	for _ in paddles.iter() {
-		let (drain, source): (Port<()>, SharedChan<()>) = SharedChan::new();
+		let (drain, source): (Port<bool>, SharedChan<bool>) = SharedChan::new();
 		sources.push(source);
 		drains.push(drain);
 		count += 1;
@@ -30,20 +30,29 @@ fn pong(paddles: ~[Paddle]) {
 		let p = paddles.clone();
 		let num = count;
 		spawn(proc() {
-			d.recv();
-			let mut rng = rand::rng();
-			let to = rng.gen::<uint>() % num;
-			if to >= num {
-				println!("game over");
-			} else {
-				println!("{} has the puck", p[to].name);
-				s[to].send(());
+			loop { 
+				if d.recv() {		
+					let mut rng = rand::rng();
+					let to = rng.gen::<uint>() % num+1;
+					if to == num {
+						println!("game over");
+						for source in s.iter() {
+							source.send(false);
+						}
+						break;
+					} else {
+						println!("{} has the puck", p[to].name);
+						s[to].send(true);
+					}
+				} else {
+					break;
+				}
 			}
 		});
 	}
 
 	// start game
-	sources[0].send(());
+	sources[0].send(true);
 }
 
 fn main() {
