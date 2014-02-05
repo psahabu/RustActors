@@ -22,7 +22,7 @@ fn pong(paddles: ~[Paddle]) {
 	// freeze the vectors now that they're built. the the compiler will stop us accidently mutating them.
 	let sources = sources;
 	let drains = drains;
-	let num = paddles.len() // just do this once. it'll be copied by the spawned closures
+	let num = paddles.len(); // just do this once. it'll be copied by the spawned closures
 
 	for d in drains.move_iter() {
 		let s = sources.clone();
