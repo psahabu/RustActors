@@ -1,3 +1,9 @@
+2/6
+I/O may change to handle EOFs differently (44,26,1)
+bounds may be allowed in type (incl struct) definitions (44,28,2)
+	http://smallcultfollowing.com/babysteps/blog/2014/01/05/dst-take-5/
+(44,31) is generally interesting (futures, smart-pointer deref, custom type bounds)
+
 2/3
 Unifying closure and proc declaration (44,20,1), waiting on trait closures
 New I/O always returns an IoResult<T>, really Result<T, IoError> (44,22,1)
