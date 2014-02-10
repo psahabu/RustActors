@@ -1,3 +1,7 @@
+2/10
+How are futures related to actors?
+Is it possible to compose actors somehow?
+
 2/6
 I/O may change to handle EOFs differently (44,26,1)
 bounds may be allowed in type (incl struct) definitions (44,28,2)

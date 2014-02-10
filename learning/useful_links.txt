@@ -9,3 +9,15 @@ http://static.rust-lang.org/doc/master/complement-cheatsheet.html
 
 Fork-join within Actors
 http://smallcultfollowing.com/babysteps/blog/2013/06/11/data-parallelism-in-rust/
+
+Erlang and Scala:
+http://savanne.be/articles/concurrency-in-erlang-scala/
+
+Erlang:
+http://learnyousomeerlang.com/the-hitchhikers-guide-to-concurrency
+http://ulf.wiger.net/weblog/2008/02/06/what-is-erlang-style-concurrency/
+
+Akka:
+http://doc.akka.io/docs/akka/snapshot/general/actors.html
+http://doc.akka.io/docs/akka/snapshot/general/jmm.html // shared memory
+http://noelwelsh.com/programming/2013/03/04/why-i-dont-like-akka-actors/
