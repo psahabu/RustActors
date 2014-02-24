@@ -1,6 +1,21 @@
+2/19
+Card game simulator looks like an Actor problem (44,57,1)
+	notion of a "game manager"/master actor is difficult
+Use issue numbers in commit messages (44,63,4)
+Debate on what reader.lines() returns in io error cases
+Closures are stack allocated, can't be returned (44,83,2)
+	proc() allows them to be heap allocated, but used only once
+	~Trait object allows them to be used many times
+	bare functions can be returned if there's no need to close on state
+
+
+2/14
+After returning None, iterators have undefined behavior
+	use Fuse to get an iterator that always returns None at the end (44,53,1)
+
 2/10
 How are futures related to actors?
-Is it possible to compose actors somehow?
+Is it possible to compose actors somehow? (Actor-combinator Actor)
 
 2/6
 I/O may change to handle EOFs differently (44,26,1)

@@ -21,3 +21,6 @@ Akka:
 http://doc.akka.io/docs/akka/snapshot/general/actors.html
 http://doc.akka.io/docs/akka/snapshot/general/jmm.html // shared memory
 http://noelwelsh.com/programming/2013/03/04/why-i-dont-like-akka-actors/
+
+Rust "subtyping":
+https://mail.mozilla.org/pipermail/rust-dev/2013-November/006545.html
