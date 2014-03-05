@@ -1,3 +1,11 @@
+3/5
+Proposal to lock other references out if an &mut borrows (44,92,3)
+Higher-kinded types and monads v. Hack (44,98,2-3)
+Send, other builtin traits may require explicit implementation (44,102,2)
+cargo-lite package manager (45,2,3)
+Faster task communication (45,5,4)
+Unlimited channels are bad again (45,19,4)
+
 2/19
 Card game simulator looks like an Actor problem (44,57,1)
 	notion of a "game manager"/master actor is difficult

@@ -1,9 +1,9 @@
-ugrad symposium abstract due 2/24: https://expo.uw.edu/expo/apply/312
+Look for high level Actor design decisions (Akka, Erlang, etc)
+--> Port Akka to Rust
+--> Examples in Akka for Rust
+
+What are HKTs and monads?
 
 Complete Rust tutorial: http://static.rust-lang.org/doc/master/tutorial.html
 Write up Project Euler problems: http://projecteuler.net/problems
 Write up other concurrency examples
-
-Look for high level Actor design decisions (Akka, Erlang, etc)
---> Fix Rust build
---> Port Akka to Rust
