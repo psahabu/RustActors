@@ -1,3 +1,8 @@
+4/7
+IO blocks tasks reading in from TcpStream (45,25,1)
+Error propagation is bounded at the task (45,83,2)
+Vec<T> and ~[T] are different (46,2,5)
+
 3/5
 Proposal to lock other references out if an &mut borrows (44,92,3)
 Higher-kinded types and monads v. Hack (44,98,2-3)
