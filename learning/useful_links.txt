@@ -1,6 +1,9 @@
 Tutorial
 http://static.rust-lang.org/doc/master/tutorial.html
 
+Ownership
+http://paulkoerbitz.de/posts/Understanding-Pointers-Ownership-and-Lifetimes-in-Rust.html
+
 Ownership and Arc
 http://words.steveklabnik.com/a-30-minute-introduction-to-rust
 
