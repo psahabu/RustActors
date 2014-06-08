@@ -2,12 +2,13 @@
  * Agents are the implementation of an Inbox
  * for an Actor in the Cage system.
  */
-use std::any::Any;
 use std::comm::channel;
 use std::comm::Sender;
 use sync::Future;
+
+use super::Message;
 use cage_message::CageMessage;
-	use cage_message::Message;
+	use cage_message::UserMessage;
 	use cage_message::Terminated;
 	use cage_message::Failure;
 	use cage_message::Undelivered;
@@ -34,13 +35,13 @@ impl Agent {
 	pub fn get_path(&self) -> String {
 		self.path.clone()
 	}
-	pub fn request(&self, msg: Box<Send>)
-			-> Future<Result<Box<Any>, Option<Box<Any>>>> {
+	pub fn request(&self, msg: Box<Message>)
+			-> Future<Result<Box<Message>, Option<Box<Message>>>> {
 		let (send, recv) = channel();
-		self | Message(msg, Agent::new(send));
+		self | UserMessage(msg, Agent::new(send));
 		Future::from_fn(proc() {
 			match recv.recv() {
-				Message(msg, _) => Ok(msg),
+				UserMessage(msg, _) => Ok(msg),
 				Failure(err, _) => Err(Some(err)),
 				_ => Err(None)
 			}
@@ -52,7 +53,7 @@ impl BitOr<CageMessage, ()> for Agent {
 	pub fn bitor(&self, msg: CageMessage) {
 		match self.inbox.send_opt(msg) {
 			Err(err) => match err {
-				Message(orig, sender) => sender | Undelivered(self.clone(), orig),
+				UserMessage(orig, sender) => sender | Undelivered(self.clone(), orig),
 				Watch(watcher) => watcher | Terminated(self.clone()),
 				_ => ()
 			}

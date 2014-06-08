@@ -9,6 +9,8 @@ pub mod actor_context;
 mod cage_message;
 // static mut ACTOR_ROOT: Context  = // TODO: construct this in context.rs
 
+pub trait Message : Send + Any {}
+
 pub trait Actor {
 	// TODO: reenable this
 	/*
@@ -24,7 +26,7 @@ pub trait Actor {
 	 */
 	fn receive(&self,
 						 context: &Context,
-						 msg: Box<Any>,
+						 msg: Box<Message>,
 						 sender: Agent);
 	
 	/*
@@ -40,14 +42,14 @@ pub trait Actor {
 	// Called if a message sent by this Actor causes failure in another.
 	fn failure(&self,
 						 context: &Context,
-						 err: Box<Any>,
+						 err: Box<Message>,
 						 sender: Agent) {}
 
 	// Called if a message sent by this Actor cannot be delivered.
 	fn undelivered(&self,
 								 context: &Context,
 								 target: Agent,
-								 orig_msg: Box<Any>) {}
+								 orig_msg: Box<Message>) {}
 
 	/*
 	 * Setup, last licks, teardown.

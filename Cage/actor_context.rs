@@ -4,11 +4,11 @@
  * and children, and format messages.
  */
 
-use std::any::Any;
 use super::Actor;
+use super::Message;
 use actor_agent::Agent;
 use cage_message::CageMessage;
-	use cage_message::Message;
+	use cage_message::UserMessage;
 	use cage_message::Terminated;
 	use cage_message::Failure;
 	use cage_message::Undelivered;
@@ -30,14 +30,13 @@ impl Context {
 	 */
 
 	// Formats a user message for an Agent.
-	// The message must have the Send trait, but otherwise can be of Any type.
-	pub fn send(&self, msg: Box<Send>) -> CageMessage {
-		Message(msg, self.agent.clone())
+	pub fn send(&self, msg: Box<Message>) -> CageMessage {
+		UserMessage(msg, self.agent.clone())
 	}
 
 	// Formats a message that will tell the receiving Actor that a
 	// failure occurred while consuming the message.
-	pub fn failure(&self, err: Box<Send>) {
+	pub fn failure(&self, err: Box<Message>) {
 		Failure(err, self.agent.clone())
 	}
 
@@ -96,7 +95,7 @@ impl Context {
 			loop {
 				match recv.recv() {
 					// TODO: consider updating Failure to take the original message 
-					Message(msg, sender) => actor.receive(&new_ref, msg, sender),
+					UserMessage(msg, sender) => actor.receive(&new_ref, msg, sender),
 					Terminated(terminated) => actor.terminated(&new_ref, terminated),
 					Failure(err, sender) => actor.failure(&new_ref, err, sender),
 					Undelivered(attempted, orig_msg) => actor.undelivered(&new_ref, attempted, orig_msg),
