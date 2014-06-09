@@ -24,7 +24,7 @@ impl Agent {
 	pub fn new(sender: Sender<CageMessage>) -> Agent {
 		Agent { inbox: sender, path: "egalite".to_string() }
 	}
-	// TODO: actually implement this, getting name from ActorRef  
+	// TODO: actually implement this, getting name from Context  
 	// TODO: figure out a way to give out guaranteed unique names
 	// 			 	 -idea: countup atomic integer
 	// 			 	 -idea: check Google
@@ -32,13 +32,27 @@ impl Agent {
 	pub fn new(sender: Sender<CageMessage>, dir: String, name: String) -> Agent {
 	}
 	*/
-	pub fn get_path(&self) -> String {
-		self.path.clone()
+
+	// Instructs the Agent to deliver the message to the Actor.
+	pub fn deliver(&self, msg: CageMessage) {
+		match self.inbox.send_opt(msg) {
+			Err(err) => match err {
+				UserMessage(orig, sender) => sender.deliver(Undelivered(self.clone(), orig)),
+				Watch(watcher) => watcher.deliver(Terminated(self.clone())),
+				_ => ()
+			},
+			// TODO: cleanup sender from agent directory
+			// 			 need to repeat this Message/Watch match on bad lookups
+			// agent directory could itself be Actor-like
+			_ => ()
+		}
 	}
+
+	// For message sending from a non-Actor.
 	pub fn request(&self, msg: Box<Message>)
 			-> Future<Result<Box<Message>, Option<Box<Message>>>> {
 		let (send, recv) = channel();
-		self | UserMessage(msg, Agent::new(send));
+		self.deliver(UserMessage(msg, Agent::new(send)));
 		Future::from_fn(proc() {
 			match recv.recv() {
 				UserMessage(msg, _) => Ok(msg),
@@ -47,20 +61,10 @@ impl Agent {
 			}
 		})
 	}
-}
 
-impl BitOr<CageMessage, ()> for Agent {
-	pub fn bitor(&self, msg: CageMessage) {
-		match self.inbox.send_opt(msg) {
-			Err(err) => match err {
-				UserMessage(orig, sender) => sender | Undelivered(self.clone(), orig),
-				Watch(watcher) => watcher | Terminated(self.clone()),
-				_ => ()
-			}
-			// TODO: cleanup sender from agent directory
-			// 			 need to repeat this Message/Watch match on bad lookups
-			// agent directory could itself be Actor-like
-		}
+	// Returns the path of this Actor.
+	pub fn get_path(&self) -> String {
+		self.path.clone()
 	}
 }
 
@@ -71,3 +75,17 @@ impl PartialEq for Agent {
 	}
 }
 
+/*
+impl BitOr<CageMessage, ()> for Agent {
+	fn bitor(&self, msg: &CageMessage) {
+		match self.inbox.send_opt(*msg) {
+			Err(err) => match err {
+				UserMessage(orig, sender) => sender | Undelivered(self.clone(), orig),
+				Watch(watcher) => watcher | Terminated(self.clone()),
+				_ => ()
+			},
+			_ => ()
+		}
+	}
+}
+*/

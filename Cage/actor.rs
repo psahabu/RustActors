@@ -7,19 +7,22 @@ use actor_context::Context;
 pub mod actor_agent;
 pub mod actor_context;
 mod cage_message;
-// static mut ACTOR_ROOT: Context  = // TODO: construct this in context.rs
 
-pub trait Message : Send + Any {}
+pub trait Message : Send {}
 
 pub trait Actor {
-	// TODO: reenable this
+	// TODO: reenable this, put it in the Context business area
 	/*
 	 * Starting an Actor from a non-Actor.
 	 *
-	fn start(actor: Box<Actor>) -> Agent {
-		ACTOR_ROOT.start_child(actor)
+	fn start<T: Actor>() -> Agent {
+		ACTOR_ROOT.start_child::<T>();
 	}
 	*/
+
+	// Requires that the Actor be constructed in such a way that
+	// it owns all of its memory.
+	fn new() -> Self; 
 
 	/*
 	 * The main function.

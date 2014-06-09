@@ -22,6 +22,9 @@ pub struct Context {
 	children: Vec<Agent>,
 }
 
+// TODO: finish this
+// static ACTOR_ROOT: Context = 
+
 impl Context {
 	/*
 	 * Formatting messages for Agents.
@@ -30,13 +33,13 @@ impl Context {
 	 */
 
 	// Formats a user message for an Agent.
-	pub fn send(&self, msg: Box<Message>) -> CageMessage {
+	pub fn wrap(&self, msg: Box<Message>) -> CageMessage {
 		UserMessage(msg, self.agent.clone())
 	}
 
 	// Formats a message that will tell the receiving Actor that a
 	// failure occurred while consuming the message.
-	pub fn failure(&self, err: Box<Message>) {
+	pub fn failure(&self, err: Box<Message>) -> CageMessage {
 		Failure(err, self.agent.clone())
 	}
 
@@ -67,14 +70,17 @@ impl Context {
 	}
 	// Returns a vector of Agents 
 	pub fn children(&self) -> Vec<Agent> {
-		&self.children.clone()
+		self.children.clone()
 	}
 
 	/*
 	 * Spins off a task for the passed Actor and places it
 	 * as a child of this Actor.
 	 */
-	pub fn start_child(&mut self, actor: Box<Actor>) -> Agent {
+	pub fn start_child<T: Actor>(&mut self) -> Agent {
+		// Creation of the Actor.
+		let actor: T = Actor::new();
+
 		// Creation of the Agent.
 		let (send, recv) = channel();
 		let child_agent = Agent::new(send);
@@ -104,18 +110,17 @@ impl Context {
 						let mut i = 0;
 						for watcher in watchers.iter() {
 							if *watcher == unwatcher {
-								watchers.swap_remove(i);
 								break;
 							}
 							i += 1;
 						}
+						watchers.swap_remove(i);
 					},
 					Kill(killer) => {
-						recv.drop();
+						//TODO: override receiver drop to send Undelivered
 						actor.killed(&new_ref, killer);
 						for watcher in watchers.move_iter() {
-							let terminated = Terminated(new_ref.agent.clone());
-							watcher | new_ref.send(terminated)
+							watcher.deliver(Terminated(new_ref.agent.clone()));
 						}
 						break;
 					}
