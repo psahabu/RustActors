@@ -78,17 +78,14 @@ impl Context {
 	 * as a child of this Actor.
 	 */
 	pub fn start_child<T: Actor>(&mut self) -> Agent {
-		// Creation of the Actor.
-		let actor: T = Actor::new();
-
 		// Creation of the Agent.
 		let (send, recv) = channel();
 		let child_agent = Agent::new(send);
 		self.children.push(child_agent.clone());
  		// TODO: put it in the directory
-
+	
 		// Creation of the Context.
-		let new_ref = Context {
+		let context = Context {
 			agent: child_agent.clone(),
 			parent: self.agent.clone(),
 			children: Vec::new()
@@ -96,15 +93,18 @@ impl Context {
 
 		// The magnificent task that runs an Actor.
 		spawn(proc() {
+			// Creation of the Actor.
+			let actor: T = Actor::new();
+
 			actor.pre_start();
 			let mut watchers = Vec::new();
 			loop {
 				match recv.recv() {
 					// TODO: consider updating Failure to take the original message 
-					UserMessage(msg, sender) => actor.receive(&new_ref, msg, sender),
-					Terminated(terminated) => actor.terminated(&new_ref, terminated),
-					Failure(err, sender) => actor.failure(&new_ref, err, sender),
-					Undelivered(attempted, orig_msg) => actor.undelivered(&new_ref, attempted, orig_msg),
+					UserMessage(msg, sender) => actor.receive(&context, msg, sender),
+					Terminated(terminated) => actor.terminated(&context, terminated),
+					Failure(err, sender) => actor.failure(&context, err, sender),
+					Undelivered(attempted, orig_msg) => actor.undelivered(&context, attempted, orig_msg),
 					Watch(watcher) => watchers.push(watcher),
 					Unwatch(unwatcher) => {
 						let mut i = 0;
@@ -117,10 +117,11 @@ impl Context {
 						watchers.swap_remove(i);
 					},
 					Kill(killer) => {
-						//TODO: override receiver drop to send Undelivered
-						actor.killed(&new_ref, killer);
+						// TODO: drop receiver
+						// TODO: try to get the remaining messages, send Undelivered
+						actor.killed(&context, killer);
 						for watcher in watchers.move_iter() {
-							watcher.deliver(Terminated(new_ref.agent.clone()));
+							watcher.deliver(Terminated(context.agent.clone()));
 						}
 						break;
 					}
