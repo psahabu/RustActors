@@ -17,10 +17,12 @@ use cage_message::CageMessage;
 	use cage_message::Unwatch;
 	use cage_message::Kill;
 
+#[deriving(Clone)]
 pub struct Context {
 	agent: Agent,
 	parent: Agent,
 	children: Vec<Agent>,
+	root: Agent
 }
 
 impl Context {
@@ -41,13 +43,26 @@ impl Context {
 		UserMessage(msg, from.clone())
 	}
 
-	pub fn find(&self, path: String, msg: Box<Message:Send>) -> CageMessage {
+	pub fn find(&self, path: String, msg: Box<Message:Send>) {
 		let path_tokens = path.as_slice().split('/');
 		let mut sendable_path = Vec::new();
+
+		// Push and pop tokens from the back, hence reverse.
 		for token in path_tokens.rev() {
 			sendable_path.push(token.to_string());
 		}
-		Find(sendable_path, msg, self.agent.clone())
+ 
+		match sendable_path.pop() {
+			Some(s) =>
+				match &s.as_slice() {
+					".." => self.parent.deliver(Find(sendable_path, msg, self.agent.clone())),
+					_ => {
+						sendable_path.push(s);
+						self.root.deliver(Find(sendable_path, msg, self.agent.clone()));
+					}
+				},
+			None => ()
+		}
 	}
 
 	// Formats a message that will tell the receiving Actor that a
@@ -98,7 +113,7 @@ impl Context {
 	pub fn start_child<T: Actor>(&mut self) -> Agent {
 		// Creation of the Context.
 		let (send, recv) = channel::<CageMessage>();
-		let context = Context::new(send, self.agent.clone());
+		let context = self.child(send);
 
 		// Get the child's Agent.
 		let agent = context.agent();
@@ -203,7 +218,7 @@ impl Context {
 			}
 	
 			// Reap this Actor's children.
-			for child in context.children().move_iter() {
+			for child in context.children().iter() {
 				child.deliver(Kill(context.agent()));
 			}	
 
@@ -212,24 +227,26 @@ impl Context {
 		});
 	}
 
-	pub fn new(sender: Sender<CageMessage>, parent: Agent) -> Context {
+	// Though publicly visible, the user can't use this due to the type of sender.
+	// Used to construct a new Context for the root.
+	pub fn root(sender: Sender<CageMessage>, parent: Agent) -> Context {
+		let root_agent = Agent::new(sender);
 		Context {	
-			agent: Agent::new(sender),
+			agent: root_agent.clone(),
 			parent: parent,
-			children: Vec::new()
+			children: Vec::new(),
+			root: root_agent.clone() 
+		}
+	}
+
+	// Used to construct a child Context from a parent.
+	fn child(&self, sender: Sender<CageMessage>) -> Context {
+		let child_agent = Agent::new(sender);
+		Context {
+			agent: child_agent,
+			parent: self.agent.clone(),
+			children: Vec::new(),
+			root: self.root.clone()
 		}
 	}
 }
-	// TODO: deal with lookups
-	// NEW IDEA: hash table of Agents
-	// OTHER IDEA: consider stripping out lookup 
-	// 						 force users to do it manually, for safety
-
-	/*
-	pub fn lookup(&self, path: String) {
-
-	}
-	fn root_lookup(path: String) {
-
-	}
-	*/
