@@ -22,10 +22,16 @@ pub struct Stage {
 
 impl Stage {
 	/*
-	 * Starting an Actor.
+	 * Starting an Actor from the root.
 	 */
+	// Randomly assigns a name.
 	pub fn start<T: Actor>(&mut self) -> Agent {
 		self.root.lock().start_child::<T>()
+	}
+
+	// With a given name.
+	pub fn start_name<T: Actor>(&mut self, name: String) -> Agent {
+		self.root.lock().start_child_name::<T>(name)
 	}
 	
 	// A context object for Actors to be created in.
