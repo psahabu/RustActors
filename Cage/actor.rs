@@ -1,3 +1,6 @@
+#![crate_type = "lib"]
+#![crate_id = "cage#0.1"]
+
 extern crate sync;
 
 use std::any::Any;
@@ -6,21 +9,13 @@ use actor_context::Context;
 
 pub mod actor_agent;
 pub mod actor_context;
+pub mod actor_stage;
 mod cage_message;
 
 pub trait Message : Send {}
 
 pub trait Actor {
-	// TODO: reenable this, put it in the Context business area
-	/*
-	 * Starting an Actor from a non-Actor.
-	 *
-	fn start<T: Actor>() -> Agent {
-		ACTOR_ROOT.start_child::<T>();
-	}
-	*/
-
-	// Requires that the Actor be constructed in such a way that
+		// Requires that the Actor be constructed in such a way that
 	// it owns all of its memory.
 	fn new() -> Self; 
 
@@ -43,10 +38,10 @@ pub trait Actor {
 								terminated: Agent) {}
 	
 	// Called if a message sent by this Actor causes failure in another.
-	fn failure(&self,
-						 context: &Context,
-						 err: Box<Message>,
-						 sender: Agent) {}
+	fn failed(&self,
+						context: &Context,
+						err: Box<Message>,
+						failed: Agent) {}
 
 	// Called if a message sent by this Actor cannot be delivered.
 	fn undelivered(&self,

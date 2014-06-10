@@ -22,9 +22,6 @@ pub struct Context {
 	children: Vec<Agent>,
 }
 
-// TODO: finish this
-// static ACTOR_ROOT: Context = 
-
 impl Context {
 	/*
 	 * Formatting messages for Agents.
@@ -68,8 +65,12 @@ impl Context {
 	}
 
 	/*
-	 * Convenient methods to access direct relatives of this Actor.
+	 * Convenience methods to access direct relatives of this Actor.
 	 */
+	// Returns the Agent for this Actor.
+	pub fn agent(&self) -> Agent {
+		self.agent.clone()
+	}
 	// Returns an Agent to this Actor's parent.
 	pub fn parent(&self) -> Agent {
 		self.parent.clone()
@@ -84,60 +85,91 @@ impl Context {
 	 * as a child of this Actor.
 	 */
 	pub fn start_child<T: Actor>(&mut self) -> Agent {
-		// Creation of the Agent.
-		let (send, recv) = channel();
-		let child_agent = Agent::new(send);
-		self.children.push(child_agent.clone());
- 		// TODO: put it in the directory
-	
 		// Creation of the Context.
-		let context = Context {
-			agent: child_agent.clone(),
-			parent: self.agent.clone(),
-			children: Vec::new()
-		};
+		let (send, recv) = channel::<CageMessage>();
+		let context = Context::new(send, self.agent.clone());
 
+		// Get the child's Agent.
+		let agent = context.agent();
+
+		// Push the child's Agent onto this Actor's child list.
+		self.children.push(agent.clone());
+	
 		// The magnificent task that runs an Actor.
 		spawn(proc() {
-			// Creation of the Actor.
+			// Creation of the user Actor.
 			let actor: T = Actor::new();
 
-			actor.pre_start();
+			// List of Agents watching for death.
 			let mut watchers = Vec::new();
+
+			// User Actor setup.
+			actor.pre_start();
+
+			// Receive messages and dispatch to user Actor.
 			loop {
 				match recv.recv() {
 					// TODO: consider updating Failure to take the original message 
 					UserMessage(msg, sender) => actor.receive(&context, msg, sender),
 					Terminated(terminated) => actor.terminated(&context, terminated),
-					Failure(err, sender) => actor.failure(&context, err, sender),
+					Failure(err, failed) => actor.failed(&context, err, failed),
 					Undelivered(attempted, orig_msg) => actor.undelivered(&context, attempted, orig_msg),
 					Watch(watcher) => watchers.push(watcher),
 					Unwatch(unwatcher) => {
 						let mut i = 0;
+						let mut remove = false;
 						for watcher in watchers.iter() {
 							if *watcher == unwatcher {
+								remove = true;
 								break;
 							}
 							i += 1;
 						}
-						watchers.swap_remove(i);
+						if remove {
+							watchers.swap_remove(i);
+						}
 					},
 					Kill(killer) => {
-						// TODO: drop receiver
 						// TODO: try to get the remaining messages, send Undelivered
+						// use recv_opt until it fails
+
+						// Stop receiving messsages immediately.
+						drop(recv);
+
+						// Notify user Actor that it has been killed.
 						actor.killed(&context, killer);
-						for watcher in watchers.move_iter() {
-							watcher.deliver(Terminated(context.agent.clone()));
-						}
+						
+						// Continue cleanup.
 						break;
 					}
 				}
 			}
+			
+			// Reap the children.
+			for child in context.children().move_iter() {
+				child.deliver(Kill(context.agent()));
+			}	
+
+			// Notify watchers of death.
+			for watcher in watchers.move_iter() {
+				watcher.deliver(Terminated(context.agent.clone()));
+			}
+
+			// User Actor cleanup.
 			actor.post_stop();		
 		});
 
-		child_agent
+		// Return the child's Agent.
+		agent
  	}
+
+	pub fn new(sender: Sender<CageMessage>, parent: Agent) -> Context {
+		Context {	
+			agent: Agent::new(sender),
+			parent: parent,
+			children: Vec::new()
+		}
+	}
 }
 	// TODO: deal with lookups
 	// NEW IDEA: hash table of Agents
