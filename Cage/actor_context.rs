@@ -43,18 +43,22 @@ impl Context {
 		UserMessage(msg, from.clone())
 	}
 
+	// Formats a message and sends it throughout the Stage hierarchy
+	// to find the designated Actor(s).
+	// ex. ../* (sibling nodes)
+	// 		 /blue (the node blue under root)
 	pub fn find(&self, path: String, msg: Box<Message:Send>) {
 		let path_tokens = path.as_slice().split('/');
 		let mut sendable_path = Vec::new();
 
-		// Push and pop tokens from the back, hence reverse.
+		// Push and pop tokens from the back of Vec, hence reverse.
 		for token in path_tokens.rev() {
 			sendable_path.push(token.to_string());
 		}
  
 		match sendable_path.pop() {
 			Some(s) =>
-				match &s.as_slice() {
+				match (&s).as_slice() {
 					".." => self.parent.deliver(Find(sendable_path, msg, self.agent.clone())),
 					_ => {
 						sendable_path.push(s);
@@ -171,20 +175,7 @@ impl Context {
 					Failure(err, failed) => actor.failed(&context, err, failed),
 					Undelivered(attempted, orig_msg) => actor.undelivered(&context, attempted, orig_msg),
 					Watch(watcher) => watchers.push(watcher),
-					Unwatch(unwatcher) => {
-						let mut i = 0;
-						let mut remove = false;
-						for watcher in watchers.iter() {
-							if *watcher == unwatcher {
-								remove = true;
-								break;
-							}
-							i += 1;
-						}
-						if remove {
-							watchers.swap_remove(i);
-						}
-					},
+					Unwatch(unwatcher) => Context::remove_unwatcher(&mut watchers, unwatcher),
 					Kill(killer) => {
 						// Drain the remaining messages, sending Undelivered and Terminated.
 						loop {
@@ -225,6 +216,21 @@ impl Context {
 			// User Actor cleanup.
 			actor.post_stop();		
 		});
+	}
+
+	fn remove_unwatcher(watchers: &mut Vec<Agent>, unwatcher: Agent) {
+		let mut i = 0;
+		let mut remove = false;
+		for watcher in watchers.iter() {
+			if *watcher == unwatcher {
+				remove = true;
+				break;
+			}
+			i += 1;
+		}
+		if remove {
+			watchers.swap_remove(i);
+		}
 	}
 
 	// Though publicly visible, the user can't use this due to the type of sender.
