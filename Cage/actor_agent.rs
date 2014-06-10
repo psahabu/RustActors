@@ -31,9 +31,15 @@ impl Agent {
 	pub fn deliver(&self, msg: CageMessage) {
 		match self.inbox.send_opt(msg) {
 			Err(err) => match err {
-				UserMessage(orig, sender) => sender.deliver(Undelivered(self.clone(), orig)),
-				Find(_, orig, sender) => sender.deliver(Undelivered(self.clone(), orig)),
-				Watch(watcher) => watcher.deliver(Terminated(self.clone())),
+				UserMessage(orig, sender) => sender.deliver(
+					Undelivered(self.clone(), orig)
+				),
+				Find(_, orig, sender) => sender.deliver(
+					Undelivered(self.clone(), orig)
+				),
+				Watch(watcher) => watcher.deliver(
+					Terminated(self.clone())
+				),
 				_ => ()
 			},
 			_ => ()
@@ -44,7 +50,9 @@ impl Agent {
 	pub fn request(&self, msg: Box<Message:Send>)
 			-> Future<Result<Box<Message:Send>, Option<Box<Message:Send>>>> {
 		let (send, recv) = channel();
-		self.deliver(UserMessage(msg, Agent::new(send, NO_ADDRESS.to_string(), NO_ADDRESS.to_string())));
+		self.deliver(UserMessage(msg, Agent::new(send,
+																						 NO_ADDRESS.to_string(),
+																						 NO_ADDRESS.to_string())));
 		Future::from_fn(proc() {
 			match recv.recv() {
 				UserMessage(msg, _) => Ok(msg),
@@ -72,7 +80,6 @@ impl Agent {
 			name: name
 		}
 	}
-
 }
 
 impl Eq for Agent { }

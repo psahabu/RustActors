@@ -16,6 +16,19 @@ use cage_message::CageMessage;
 	use cage_message::Unwatch;
 	use cage_message::Kill;
 
+static MESSAGE_ERROR: &'static str =
+	"ERROR: Tried to deliver a message to Stage.";
+static PARENT_ERROR: &'static str =
+	"ERROR: Tried to access parent of Stage.";
+static FAILURE_ERROR: &'static str =
+	"ERROR: Tried to deliver failure message to Stage.";
+static WATCH_ERROR: &'static str =
+	"ERROR: Tried to watch the Stage.";
+static UNWATCH_ERROR: &'static str =
+	"ERROR: Tried to unwatch the Stage.";
+static KILL_ERROR: &'static str =
+	"ERROR: Tried to kill the Stage.";
+
 pub struct Stage {
 	root: Arc<Mutex<Context>>
 }
@@ -41,7 +54,9 @@ impl Stage {
 	
 		// Setup an Agent and a dummy parent.
 		let (_send, _recv) = channel::<CageMessage>();
-		let dummy_parent = Agent::new(_send, NO_ADDRESS.to_string(), NO_ADDRESS.to_string());
+		let dummy_parent = Agent::new(_send,
+																	NO_ADDRESS.to_string(),
+																	NO_ADDRESS.to_string());
 
 		// Create a context.
 		let root_context = Context::root(send, dummy_parent);
@@ -62,8 +77,9 @@ impl Stage {
 		spawn(proc() {
 			loop {
 				match recv.recv() {
-					UserMessage(msg, sender) =>
-						sender.deliver(Stage::stage_failure("ERROR: Tried to deliver a message to Stage.", &context)),
+					UserMessage(msg, sender) => sender.deliver(
+						Stage::stage_failure(MESSAGE_ERROR, &context)
+					),
 					Find(path, msg, sender) => {
 						let mut _path = path;
 						match _path.pop() {
@@ -74,7 +90,9 @@ impl Stage {
 											child.deliver(UserMessage(msg.clone_me(), sender.clone()));
 										}	
 									},
-									".." =>	sender.deliver(Stage::stage_failure("ERROR: Tried to access parent of Stage.", &context)),
+									".." =>	sender.deliver(
+										Stage::stage_failure(PARENT_ERROR, &context)
+									),
 									_ => {
 										for child in context.lock().children().iter() {
 											if child.name() == *s {
@@ -84,15 +102,25 @@ impl Stage {
 										}
 									}
 								},
-							None => sender.deliver(Stage::stage_failure("ERROR: Tried to deliver a message to Stage.", &context)),
+							None => sender.deliver(
+								Stage::stage_failure(MESSAGE_ERROR, &context)
+							),
 						}
 					},
 					Terminated(_) => (), // this should never happen
-					Failure(msg, failed) =>	failed.deliver(Stage::stage_failure("ERROR: Tried to deliver failure message to Stage.", &context)),
+					Failure(msg, failed) =>	failed.deliver(
+						Stage::stage_failure(FAILURE_ERROR, &context)
+					),
 					Undelivered(_, _) => (),
-					Watch(watcher) => watcher.deliver(Stage::stage_failure("ERROR: Tried to watch the Stage.", &context)),
-					Unwatch(unwatcher) => unwatcher.deliver(Stage::stage_failure("ERROR: Tried to unwatch the Stage.", &context)),
-					Kill(killer) => killer.deliver(Stage::stage_failure("ERROR: Tried to kill the Stage.", &context))
+					Watch(watcher) => watcher.deliver(
+						Stage::stage_failure(WATCH_ERROR, &context)
+					),
+					Unwatch(unwatcher) => unwatcher.deliver(
+						Stage::stage_failure(UNWATCH_ERROR, &context)
+					),
+					Kill(killer) => killer.deliver(
+						Stage::stage_failure(KILL_ERROR, &context)
+					)
 				}	
 			}
 		});

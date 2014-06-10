@@ -64,10 +64,15 @@ impl Context {
 		match sendable_path.pop() {
 			Some(s) =>
 				match (&s).as_slice() {
-					".." => self.parent.deliver(Find(sendable_path, msg, self.agent.clone())),
+					".." =>
+						self.parent.deliver(
+							Find(sendable_path, msg, self.agent.clone())
+						),
 					_ => {
 						sendable_path.push(s);
-						self.root.deliver(Find(sendable_path, msg, self.agent.clone()));
+						self.root.deliver(
+							Find(sendable_path, msg, self.agent.clone())
+						);
 					}
 				},
 			None => ()
@@ -248,9 +253,15 @@ impl Context {
 			match recv.try_recv() {
 				Ok(cage_msg) =>
 					match cage_msg {
-						UserMessage(orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
-						Find(_, orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
-						Watch(watcher) => watcher.deliver(Terminated(context.agent.clone())),
+						UserMessage(orig, sender) => sender.deliver(
+							Undelivered(context.agent.clone(), orig)
+						),
+						Find(_, orig, sender) => sender.deliver(
+							Undelivered(context.agent.clone(), orig)
+						),
+						Watch(watcher) => watcher.deliver(
+							Terminated(context.agent.clone())
+						),
 						_ => ()
 					},
 				Err(_) => ()
@@ -261,7 +272,9 @@ impl Context {
 	// Though publicly visible, the user can't use this due to the type of sender.
 	// Used to construct a new Context for the root.
 	pub fn root(sender: Sender<CageMessage>, parent: Agent) -> Context {
-		let root_agent = Agent::new(sender, NO_ADDRESS.to_string(), ROOT_ADDRESS.to_string());
+		let root_agent = Agent::new(sender,
+																NO_ADDRESS.to_string(),
+																ROOT_ADDRESS.to_string());
 		Context {	
 			agent: root_agent.clone(),
 			parent: parent,
