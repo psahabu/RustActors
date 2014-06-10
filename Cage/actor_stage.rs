@@ -4,6 +4,7 @@ use sync::Mutex;
 use super::Actor;
 use super::Message;
 use actor_agent::Agent;
+use actor_agent::NO_ADDRESS;
 use actor_context::Context;
 use cage_message::CageMessage;
 	use cage_message::UserMessage;
@@ -34,7 +35,7 @@ impl Stage {
 	
 		// Setup an Agent and a dummy parent.
 		let (_send, _recv) = channel::<CageMessage>();
-		let dummy_parent = Agent::new(_send);
+		let dummy_parent = Agent::new(_send, NO_ADDRESS.to_string(), NO_ADDRESS.to_string());
 
 		// Create a context.
 		let root_context = Context::root(send, dummy_parent);

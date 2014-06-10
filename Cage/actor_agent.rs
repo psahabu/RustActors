@@ -15,6 +15,10 @@ use cage_message::CageMessage;
 	use cage_message::Undelivered;
 	use cage_message::Watch;
 
+pub static NO_ADDRESS: &'static str = "";
+pub static ROOT_ADDRESS: &'static str = "/";
+pub static NAME_LENGTH: uint = 20;
+
 #[deriving(Clone)]
 pub struct Agent {
 	inbox: Sender<CageMessage>,
@@ -40,7 +44,7 @@ impl Agent {
 	pub fn request(&self, msg: Box<Message:Send>)
 			-> Future<Result<Box<Message:Send>, Option<Box<Message:Send>>>> {
 		let (send, recv) = channel();
-		self.deliver(UserMessage(msg, Agent::new(send)));
+		self.deliver(UserMessage(msg, Agent::new(send, NO_ADDRESS.to_string(), NO_ADDRESS.to_string())));
 		Future::from_fn(proc() {
 			match recv.recv() {
 				UserMessage(msg, _) => Ok(msg),
@@ -60,17 +64,14 @@ impl Agent {
 		self.name.clone()
 	}
 	
-	pub fn new(sender: Sender<CageMessage>) -> Agent {
-		Agent { inbox: sender, path: "egalite".to_string(), name: "inigo montoya".to_string()}
-	}
-	// TODO: actually implement this, getting name from Context  
-	// TODO: figure out a way to give out guaranteed unique names
-	// 			 	 -idea: countup atomic integer
-	// 			 	 -idea: check Google
-	/*
+	// Returns a new Agent with a given name.
 	pub fn new(sender: Sender<CageMessage>, dir: String, name: String) -> Agent {
+		Agent {
+			inbox: sender,
+			path: dir.append(name.as_slice()),
+			name: name
+		}
 	}
-	*/
 
 }
 
@@ -80,18 +81,3 @@ impl PartialEq for Agent {
 		self.path == other.path
 	}
 }
-
-/*
-impl BitOr<CageMessage, ()> for Agent {
-	fn bitor(&self, msg: &CageMessage) {
-		match self.inbox.send_opt(*msg) {
-			Err(err) => match err {
-				UserMessage(orig, sender) => sender | Undelivered(self.clone(), orig),
-				Watch(watcher) => watcher | Terminated(self.clone()),
-				_ => ()
-			},
-			_ => ()
-		}
-	}
-}
-*/

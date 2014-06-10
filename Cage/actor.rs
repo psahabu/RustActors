@@ -3,7 +3,6 @@
 
 extern crate sync;
 
-use std::any::Any;
 use actor_agent::Agent;
 use actor_context::Context;
 

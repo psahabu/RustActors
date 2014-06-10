@@ -3,10 +3,15 @@
  * Cage system. They create Actors, track the Actor's parent
  * and children, and format messages.
  */
+use std::rand;
+use std::rand::Rng;
 
 use super::Actor;
 use super::Message;
 use actor_agent::Agent;
+use actor_agent::NAME_LENGTH;
+use actor_agent::NO_ADDRESS;
+use actor_agent::ROOT_ADDRESS;
 use cage_message::CageMessage;
 	use cage_message::UserMessage;
 	use cage_message::Find;
@@ -113,11 +118,18 @@ impl Context {
 	 * Spins off a task for the passed Actor and places it
 	 * as a child of this Actor.
 	 */
-	// Mends Contexts to reflect the child Actor.
+	// Calls start_child with a random name.
 	pub fn start_child<T: Actor>(&mut self) -> Agent {
+		let mut rng = rand::task_rng();
+		let name = rng.gen_ascii_chars().take(NAME_LENGTH).collect();
+		self.start_child_name::<T>(name)
+	}
+
+	// Mends Contexts to reflect the child Actor with the given name.
+	pub fn start_child_name<T: Actor>(&mut self, name: String) -> Agent {
 		// Creation of the Context.
 		let (send, recv) = channel::<CageMessage>();
-		let context = self.child(send);
+		let context = self.child(send, name);
 
 		// Get the child's Agent.
 		let agent = context.agent();
@@ -132,6 +144,16 @@ impl Context {
 		agent
  	}
 	
+	// Used to construct a child Context from a parent.
+	fn child(&self, sender: Sender<CageMessage>, name: String) -> Context {
+		Context {
+			agent: Agent::new(sender, self.agent.path(), name), 
+			parent: self.agent.clone(),
+			children: Vec::new(),
+			root: self.root.clone()
+		}
+	}
+
 	// The magnificent function that runs an Actor.
 	fn spawn_child<T: Actor>(recv: Receiver<CageMessage>, context: Context) {
 		spawn(proc() {
@@ -177,22 +199,8 @@ impl Context {
 					Watch(watcher) => watchers.push(watcher),
 					Unwatch(unwatcher) => Context::remove_unwatcher(&mut watchers, unwatcher),
 					Kill(killer) => {
-						// Drain the remaining messages, sending Undelivered and Terminated.
-						loop {
-							match recv.try_recv() {
-								Ok(cage_msg) =>
-									match cage_msg {
-										UserMessage(orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
-										Find(_, orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
-										Watch(watcher) => watcher.deliver(Terminated(context.agent.clone())),
-										_ => ()
-									},
-								Err(_) => ()
-							}
-						}
-
-						// Stop receiving messsages immediately.
-						drop(recv);
+						// Drain and consume the receiver.
+						Context::drain_recv(recv, &context);
 
 						// Notify user Actor that it has been killed.
 						actor.killed(&context, killer);
@@ -218,6 +226,7 @@ impl Context {
 		});
 	}
 
+	// Remove the unwatcher from watchers.
 	fn remove_unwatcher(watchers: &mut Vec<Agent>, unwatcher: Agent) {
 		let mut i = 0;
 		let mut remove = false;
@@ -233,26 +242,31 @@ impl Context {
 		}
 	}
 
+	// Drain the remaining messages from the Receiver, sending Undelivered and Terminated.
+	fn drain_recv(recv: Receiver<CageMessage>, context: &Context) {
+		loop {
+			match recv.try_recv() {
+				Ok(cage_msg) =>
+					match cage_msg {
+						UserMessage(orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
+						Find(_, orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
+						Watch(watcher) => watcher.deliver(Terminated(context.agent.clone())),
+						_ => ()
+					},
+				Err(_) => ()
+			}
+		}
+	}
+
 	// Though publicly visible, the user can't use this due to the type of sender.
 	// Used to construct a new Context for the root.
 	pub fn root(sender: Sender<CageMessage>, parent: Agent) -> Context {
-		let root_agent = Agent::new(sender);
+		let root_agent = Agent::new(sender, NO_ADDRESS.to_string(), ROOT_ADDRESS.to_string());
 		Context {	
 			agent: root_agent.clone(),
 			parent: parent,
 			children: Vec::new(),
-			root: root_agent.clone() 
-		}
-	}
-
-	// Used to construct a child Context from a parent.
-	fn child(&self, sender: Sender<CageMessage>) -> Context {
-		let child_agent = Agent::new(sender);
-		Context {
-			agent: child_agent,
-			parent: self.agent.clone(),
-			children: Vec::new(),
-			root: self.root.clone()
+			root: root_agent.clone()
 		}
 	}
 }
