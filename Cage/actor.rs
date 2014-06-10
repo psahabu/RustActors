@@ -1,6 +1,6 @@
 #![crate_type = "lib"]
 #![crate_id = "cage#0.1"]
-
+#![feature(macro_rules)]                                                                                               
 extern crate sync;
 
 use actor_agent::Agent;
@@ -9,6 +9,7 @@ use actor_context::Context;
 pub mod actor_agent;
 pub mod actor_context;
 pub mod actor_stage;
+pub mod match_any;
 mod cage_message;
 
 pub trait Message : Send + Clone {
