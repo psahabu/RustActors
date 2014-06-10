@@ -34,7 +34,7 @@ impl Stage {
 	/*
 	 * Starting an Actor.
 	 */
-	fn start<T: Actor>(&mut self) -> Agent {
+	pub fn start<T: Actor>(&mut self) -> Agent {
 		self.root.start_child::<T>()
 	}
 }

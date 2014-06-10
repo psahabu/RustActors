@@ -9,6 +9,7 @@ use sync::Future;
 use super::Message;
 use cage_message::CageMessage;
 	use cage_message::UserMessage;
+	use cage_message::Find;
 	use cage_message::Terminated;
 	use cage_message::Failure;
 	use cage_message::Undelivered;
@@ -17,34 +18,20 @@ use cage_message::CageMessage;
 #[deriving(Clone)]
 pub struct Agent {
 	inbox: Sender<CageMessage>,
-	path: String
+	path: String,
+	name: String
 }
 
 impl Agent {
-	pub fn new(sender: Sender<CageMessage>) -> Agent {
-		Agent { inbox: sender, path: "egalite".to_string() }
-	}
-	// TODO: actually implement this, getting name from Context  
-	// TODO: figure out a way to give out guaranteed unique names
-	// 			 	 -idea: countup atomic integer
-	// 			 	 -idea: check Google
-	// TODO: wait on typing, as children gets weird and heavy from dynamic dispatch 
-	/*
-	pub fn new<T: Actor>(sender: Sender<CageMessage>, dir: String, name: String) -> Agent<T> {
-	}
-	*/
-
-	// Instructs the Agent to deliver the message to the Actor.
+		// Instructs the Agent to deliver the message to the Actor.
 	pub fn deliver(&self, msg: CageMessage) {
 		match self.inbox.send_opt(msg) {
 			Err(err) => match err {
 				UserMessage(orig, sender) => sender.deliver(Undelivered(self.clone(), orig)),
+				Find(_, orig, sender) => sender.deliver(Undelivered(self.clone(), orig)),
 				Watch(watcher) => watcher.deliver(Terminated(self.clone())),
 				_ => ()
 			},
-			// TODO: cleanup sender from agent directory
-			// 			 need to repeat this Message/Watch match on bad lookups
-			// agent directory could itself be Actor-like
 			_ => ()
 		}
 	}
@@ -64,9 +51,27 @@ impl Agent {
 	}
 
 	// Returns the path of this Actor.
-	pub fn get_path(&self) -> String {
+	pub fn path(&self) -> String {
 		self.path.clone()
 	}
+
+	// Returns the name of this Actor (path-independent).
+	pub fn name(&self) -> String {
+		self.name.clone()
+	}
+	
+	pub fn new(sender: Sender<CageMessage>) -> Agent {
+		Agent { inbox: sender, path: "egalite".to_string(), name: "inigo montoya".to_string()}
+	}
+	// TODO: actually implement this, getting name from Context  
+	// TODO: figure out a way to give out guaranteed unique names
+	// 			 	 -idea: countup atomic integer
+	// 			 	 -idea: check Google
+	/*
+	pub fn new(sender: Sender<CageMessage>, dir: String, name: String) -> Agent {
+	}
+	*/
+
 }
 
 impl Eq for Agent { }

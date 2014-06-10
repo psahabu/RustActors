@@ -12,10 +12,14 @@ pub mod actor_context;
 pub mod actor_stage;
 mod cage_message;
 
-pub trait Message : Send {}
+pub trait Message : Send + Clone {
+	fn clone_me(&self) -> Box<Message:Send> {
+		box self.clone() as Box<Message:Send>
+	}
+}
 
 pub trait Actor {
-		// Requires that the Actor be constructed in such a way that
+	// Requires that the Actor be constructed in such a way that
 	// it owns all of its memory.
 	fn new() -> Self; 
 

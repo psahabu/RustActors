@@ -9,6 +9,7 @@ use super::Message;
 use actor_agent::Agent;
 use cage_message::CageMessage;
 	use cage_message::UserMessage;
+	use cage_message::Find;
 	use cage_message::Terminated;
 	use cage_message::Failure;
 	use cage_message::Undelivered;
@@ -38,6 +39,15 @@ impl Context {
 	// given Actor as opposed to this one.
 	pub fn forward(&self, msg: Box<Message:Send>, from: &Agent) -> CageMessage {
 		UserMessage(msg, from.clone())
+	}
+
+	pub fn find(&self, path: String, msg: Box<Message:Send>) -> CageMessage {
+		let path_tokens = path.as_slice().split('/');
+		let mut sendable_path = Vec::new();
+		for token in path_tokens.rev() {
+			sendable_path.push(token.to_string());
+		}
+		Find(sendable_path, msg, self.agent.clone())
 	}
 
 	// Formats a message that will tell the receiving Actor that a
@@ -84,6 +94,7 @@ impl Context {
 	 * Spins off a task for the passed Actor and places it
 	 * as a child of this Actor.
 	 */
+	// Mends Contexts to reflect the child Actor.
 	pub fn start_child<T: Actor>(&mut self) -> Agent {
 		// Creation of the Context.
 		let (send, recv) = channel::<CageMessage>();
@@ -94,8 +105,16 @@ impl Context {
 
 		// Push the child's Agent onto this Actor's child list.
 		self.children.push(agent.clone());
+
+		// Consume the Receiver and Context to spawn the child.
+		Context::spawn_child::<T>(recv, context);
+
+		// Return the child's Agent.
+		agent
+ 	}
 	
-		// The magnificent task that runs an Actor.
+	// The magnificent function that runs an Actor.
+	fn spawn_child<T: Actor>(recv: Receiver<CageMessage>, context: Context) {
 		spawn(proc() {
 			// Creation of the user Actor.
 			let actor: T = Actor::new();
@@ -109,8 +128,30 @@ impl Context {
 			// Receive messages and dispatch to user Actor.
 			loop {
 				match recv.recv() {
-					// TODO: consider updating Failure to take the original message 
 					UserMessage(msg, sender) => actor.receive(&context, msg, sender),
+					Find(path, msg, sender) => {
+						let mut _path = path;
+						match _path.pop() {
+							None => actor.receive(&context, msg, sender),
+							Some(ref s) =>
+								match s.as_slice() {
+									"*" => { 
+										for child in context.children.iter() {
+											child.deliver(UserMessage(msg.clone_me(), sender.clone()));
+										}	
+									},
+									".." => context.parent.deliver(Find(_path, msg, sender)),
+									_ => {
+										for child in context.children.iter() {
+											if child.name() == *s {
+												child.deliver(Find(_path, msg, sender));
+												break;
+											}
+										}
+									}
+								}
+						}
+					},
 					Terminated(terminated) => actor.terminated(&context, terminated),
 					Failure(err, failed) => actor.failed(&context, err, failed),
 					Undelivered(attempted, orig_msg) => actor.undelivered(&context, attempted, orig_msg),
@@ -130,8 +171,19 @@ impl Context {
 						}
 					},
 					Kill(killer) => {
-						// TODO: try to get the remaining messages, send Undelivered
-						// use recv_opt until it fails
+						// Drain the remaining messages, sending Undelivered and Terminated.
+						loop {
+							match recv.try_recv() {
+								Ok(cage_msg) =>
+									match cage_msg {
+										UserMessage(orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
+										Find(_, orig, sender) => sender.deliver(Undelivered(context.agent.clone(), orig)),
+										Watch(watcher) => watcher.deliver(Terminated(context.agent.clone())),
+										_ => ()
+									},
+								Err(_) => ()
+							}
+						}
 
 						// Stop receiving messsages immediately.
 						drop(recv);
@@ -144,24 +196,21 @@ impl Context {
 					}
 				}
 			}
-			
-			// Reap the children.
+		
+			// Notify watchers of this Actor's death.
+			for watcher in watchers.move_iter() {
+				watcher.deliver(Terminated(context.agent.clone()));
+			}
+	
+			// Reap this Actor's children.
 			for child in context.children().move_iter() {
 				child.deliver(Kill(context.agent()));
 			}	
 
-			// Notify watchers of death.
-			for watcher in watchers.move_iter() {
-				watcher.deliver(Terminated(context.agent.clone()));
-			}
-
 			// User Actor cleanup.
 			actor.post_stop();		
 		});
-
-		// Return the child's Agent.
-		agent
- 	}
+	}
 
 	pub fn new(sender: Sender<CageMessage>, parent: Agent) -> Context {
 		Context {	
