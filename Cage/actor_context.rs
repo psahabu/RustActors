@@ -28,18 +28,24 @@ pub struct Context {
 impl Context {
 	/*
 	 * Formatting messages for Agents.
-	 * ex. agent | context.send(...)
-	 *     agent | context.kill()
+	 * ex. agent.deliver(context.send(...))
+	 *     agent.deliver(context.kill())
 	 */
 
 	// Formats a user message for an Agent.
-	pub fn wrap(&self, msg: Box<Message>) -> CageMessage {
+	pub fn wrap(&self, msg: Box<Message:Send>) -> CageMessage {
 		UserMessage(msg, self.agent.clone())
+	}
+
+	// Formats a message such that it appears to be from the
+	// given Actor as opposed to this one.
+	pub fn forward(&self, msg: Box<Message:Send>, from: &Agent) -> CageMessage {
+		UserMessage(msg, from.clone())
 	}
 
 	// Formats a message that will tell the receiving Actor that a
 	// failure occurred while consuming the message.
-	pub fn failure(&self, err: Box<Message>) -> CageMessage {
+	pub fn failure(&self, err: Box<Message:Send>) -> CageMessage {
 		Failure(err, self.agent.clone())
 	}
 

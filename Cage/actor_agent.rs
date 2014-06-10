@@ -28,8 +28,9 @@ impl Agent {
 	// TODO: figure out a way to give out guaranteed unique names
 	// 			 	 -idea: countup atomic integer
 	// 			 	 -idea: check Google
+	// TODO: wait on typing, as children gets weird and heavy from dynamic dispatch 
 	/*
-	pub fn new(sender: Sender<CageMessage>, dir: String, name: String) -> Agent {
+	pub fn new<T: Actor>(sender: Sender<CageMessage>, dir: String, name: String) -> Agent<T> {
 	}
 	*/
 
@@ -49,8 +50,8 @@ impl Agent {
 	}
 
 	// For message sending from a non-Actor.
-	pub fn request(&self, msg: Box<Message>)
-			-> Future<Result<Box<Message>, Option<Box<Message>>>> {
+	pub fn request(&self, msg: Box<Message:Send>)
+			-> Future<Result<Box<Message:Send>, Option<Box<Message:Send>>>> {
 		let (send, recv) = channel();
 		self.deliver(UserMessage(msg, Agent::new(send)));
 		Future::from_fn(proc() {
