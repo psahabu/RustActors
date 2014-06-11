@@ -191,11 +191,16 @@ impl Context {
                   },
                   ".." => context.parent.deliver(Find(_path, msg, sender)),
                   _ => {
+                    let mut found = false;
                     for child in context.children.iter() {
                       if child.name() == *s {
-                        child.deliver(Find(_path, msg, sender));
+                        child.deliver(Find(_path, msg.clone_me(), sender.clone()));
+                        found = true;
                         break;
                       }
+                    }
+                    if !found {
+                      sender.deliver(Undelivered(context.agent.clone(), msg));
                     }
                   }
                 }
