@@ -6,12 +6,12 @@ use actor::Message;
 use actor_agent::Agent;
 
 pub enum CageMessage {
-	UserMessage(Box<Message:Send>, Agent),
-	Find(Vec<String>, Box<Message:Send>, Agent),
-	Terminated(Agent),
-	Failure(Box<Message:Send>, Agent),
-	Undelivered(Agent, Box<Message:Send>),
-	Watch(Agent),
-	Unwatch(Agent),
-	Kill(Agent)
+  UserMessage(Box<Message:Send>, Agent),
+  Find(Vec<String>, Box<Message:Send>, Agent),
+  Terminated(Agent),
+  Failure(Box<Message:Send>, Agent),
+  Undelivered(Agent, Box<Message:Send>),
+  Watch(Agent),
+  Unwatch(Agent),
+  Kill(Agent)
 }
