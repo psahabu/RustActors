@@ -50,9 +50,8 @@ impl Agent {
   // For message sending from a non-Actor.
   pub fn request(&self, msg: Box<Message:Send>) -> Future<Option<Box<Message:Send>>> {
     let (send, recv) = channel();
-    self.deliver(UserMessage(msg.clone_me(), Agent::new(send,
-                                                        NO_ADDRESS.to_string(),
-                                                        NO_ADDRESS.to_string())));
+    self.deliver(UserMessage(msg.clone_me(), Agent::dummy(send))); 
+
     Future::from_fn(proc() {
       match recv.recv_opt() {
         Ok(m) =>
@@ -65,6 +64,13 @@ impl Agent {
       }
     })
   }
+
+  // For message sending from a non-Actor without a response. 
+  pub fn fire_and_forget(&self, msg: Box<Message:Send>) {
+    let (send, recv) = channel();
+    self.deliver(UserMessage(msg.clone_me(), Agent::dummy(send)));
+  }
+
 
   // Returns the path of this Actor.
   pub fn path(&self) -> String {
@@ -83,6 +89,11 @@ impl Agent {
       path: dir.append(name.as_slice()),
       name: name
     }
+  }
+
+  // Returns an Agent with no directory information.
+  fn dummy(sender: Sender<CageMessage>) -> Agent {
+    Agent::new(sender, NO_ADDRESS.to_string(), NO_ADDRESS.to_string())
   }
 }
 
