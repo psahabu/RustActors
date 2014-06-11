@@ -54,9 +54,13 @@ impl Agent {
                                                         NO_ADDRESS.to_string(),
                                                         NO_ADDRESS.to_string())));
     Future::from_fn(proc() {
-      match recv.recv() {
-        UserMessage(msg, _) => Some(msg),
-        Failure(err, _) => Some(msg),
+      match recv.recv_opt() {
+        Ok(m) =>
+          match m {
+            UserMessage(msg, _) => Some(msg),
+            Failure(err, _) => Some(msg),
+            _ => None
+          },
         _ => None
       }
     })

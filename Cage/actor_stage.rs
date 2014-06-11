@@ -77,7 +77,7 @@ impl Stage {
     spawn(proc() {
       loop {
         match recv.recv() {
-          UserMessage(msg, sender) => sender.deliver(
+          UserMessage(_, sender) => sender.deliver(
             Stage::stage_failure(MESSAGE_ERROR, &context)
           ),
           Find(path, msg, sender) => {
@@ -108,7 +108,7 @@ impl Stage {
             }
           },
           Terminated(_) => (), // this should never happen
-          Failure(msg, failed) =>  failed.deliver(
+          Failure(_, failed) =>  failed.deliver(
             Stage::stage_failure(FAILURE_ERROR, &context)
           ),
           Undelivered(_, _) => (),

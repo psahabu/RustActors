@@ -78,7 +78,8 @@ pub trait Actor {
    */
 
   // Called before this Actor starts receiving messages.
-  fn pre_start(&mut self) {}
+  fn pre_start(&mut self,
+              context: &mut Context) {}
 
   // Actors are responsible for recovery from their own errors.
   
@@ -89,5 +90,6 @@ pub trait Actor {
             killer: Agent) {}
   
   // Called after this Actor permanently ceases receiving messages.
-  fn post_stop(&mut self) {}
+  fn post_stop(&mut self,
+              context: &mut Context) {}
 }

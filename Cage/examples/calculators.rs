@@ -45,7 +45,10 @@ struct Generator {
 
 impl Actor for Generator {
   fn new() -> Generator {
-    Generator { boss: None, first: None }
+    Generator {
+      boss: None,
+      first: None
+    }
   }
   fn receive(&mut self,
              context: &mut Context,
@@ -54,11 +57,10 @@ impl Actor for Generator {
     match_any! { msg match
       if Rounds {
         &Rounds{ rounds } => {
-          let c1 = context.start_child::<Calculator>();
-          let c2 = context.start_child::<Calculator>();
-          c1.deliver(context.send(box Rounds {rounds: rounds}));
-          c2.deliver(context.send(box Rounds {rounds: rounds}));
-          self.boss = Some(sender.clone());
+           self.boss = Some(sender.clone());
+           for child in context.children().iter() {
+             child.deliver(context.send(msg.clone_me()));
+           }
         }
       },
       if WantNumber {
@@ -79,6 +81,10 @@ impl Actor for Generator {
         ()
       }
     };
+  }
+  fn pre_start(&mut self, context: &mut Context) {
+    context.start_child::<Calculator>();
+    context.start_child::<Calculator>();
   }
 }
 

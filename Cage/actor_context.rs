@@ -172,7 +172,7 @@ impl Context {
       let mut watchers = Vec::new();
 
       // User Actor setup.
-      actor.pre_start();
+      actor.pre_start(&mut context);
 
       // Receive messages and dispatch to user Actor.
       loop {
@@ -230,7 +230,7 @@ impl Context {
       }  
 
       // User Actor cleanup.
-      actor.post_stop();    
+      actor.post_stop(&mut context);    
     });
   }
 
