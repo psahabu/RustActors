@@ -2,8 +2,8 @@
  * Defines the different kinds of messages that Agents and
  * ActorRefs handle for their Actors.
  */
+use actor::Message;
 use actor_agent::Agent;
-use super::Message;
 
 pub enum CageMessage {
 	UserMessage(Box<Message:Send>, Agent),

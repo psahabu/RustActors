@@ -6,8 +6,8 @@
 use std::rand;
 use std::rand::Rng;
 
-use super::Actor;
-use super::Message;
+use actor::Actor;
+use actor::Message;
 use actor_agent::Agent;
 use actor_agent::NAME_LENGTH;
 use actor_agent::NO_ADDRESS;
@@ -38,7 +38,7 @@ impl Context {
 	 */
 
 	// Formats a user message for an Agent.
-	pub fn wrap(&self, msg: Box<Message:Send>) -> CageMessage {
+	pub fn send(&self, msg: Box<Message:Send>) -> CageMessage {
 		UserMessage(msg, self.agent.clone())
 	}
 
@@ -163,7 +163,10 @@ impl Context {
 	fn spawn_child<T: Actor>(recv: Receiver<CageMessage>, context: Context) {
 		spawn(proc() {
 			// Creation of the user Actor.
-			let actor: T = Actor::new();
+			let mut actor: T = Actor::new();
+
+			// Mutable capture of Context.
+			let mut context = context;
 
 			// List of Agents watching for death.
 			let mut watchers = Vec::new();
@@ -174,11 +177,11 @@ impl Context {
 			// Receive messages and dispatch to user Actor.
 			loop {
 				match recv.recv() {
-					UserMessage(msg, sender) => actor.receive(&context, msg, sender),
+					UserMessage(msg, sender) => actor.receive(&mut context, msg, sender),
 					Find(path, msg, sender) => {
 						let mut _path = path;
 						match _path.pop() {
-							None => actor.receive(&context, msg, sender),
+							None => actor.receive(&mut context, msg, sender),
 							Some(ref s) =>
 								match s.as_slice() {
 									"*" => { 
@@ -198,9 +201,9 @@ impl Context {
 								}
 						}
 					},
-					Terminated(terminated) => actor.terminated(&context, terminated),
-					Failure(err, failed) => actor.failed(&context, err, failed),
-					Undelivered(attempted, orig_msg) => actor.undelivered(&context, attempted, orig_msg),
+					Terminated(terminated) => actor.terminated(&mut context, terminated),
+					Failure(err, failed) => actor.failed(&mut context, err, failed),
+					Undelivered(attempted, orig_msg) => actor.undelivered(&mut context, attempted, orig_msg),
 					Watch(watcher) => watchers.push(watcher),
 					Unwatch(unwatcher) => Context::remove_unwatcher(&mut watchers, unwatcher),
 					Kill(killer) => {
@@ -208,7 +211,7 @@ impl Context {
 						Context::drain_recv(recv, &context);
 
 						// Notify user Actor that it has been killed.
-						actor.killed(&context, killer);
+						actor.killed(&mut context, killer);
 						
 						// Continue cleanup.
 						break;

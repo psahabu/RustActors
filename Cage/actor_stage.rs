@@ -1,8 +1,8 @@
 use sync::Arc;
 use sync::Mutex;
 
-use super::Actor;
-use super::Message;
+use actor::Actor;
+use actor::Message;
 use actor_agent::Agent;
 use actor_agent::NO_ADDRESS;
 use actor_context::Context;

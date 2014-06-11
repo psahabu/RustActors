@@ -1,8 +1,7 @@
 // Copyright 2014: Ty Overby
 
-use std::any::Any;                                                                                                     
-use std::any::AnyRefExt;                                                                                               
-pub macro_rules! match_any(                                                                                                
+#[macro_export]
+macro_rules! match_any(                                                                                                
     ($val:expr match  $(if $typ:ty { $($patn: pat => $exp: expr),+  }),+ else { $other: expr}) => (                    
         {                                                                                                              
             $(                                                                                                         

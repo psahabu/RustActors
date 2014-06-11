@@ -2,11 +2,12 @@
  * Agents are the implementation of an Inbox
  * for an Actor in the Cage system.
  */
+use std::any::Any;
 use std::comm::channel;
 use std::comm::Sender;
 use sync::Future;
 
-use super::Message;
+use actor::Message;
 use cage_message::CageMessage;
 	use cage_message::UserMessage;
 	use cage_message::Find;
@@ -47,17 +48,16 @@ impl Agent {
 	}
 
 	// For message sending from a non-Actor.
-	pub fn request(&self, msg: Box<Message:Send>)
-			-> Future<Result<Box<Message:Send>, Option<Box<Message:Send>>>> {
+	pub fn request(&self, msg: Box<Message:Send>) -> Future<Option<Box<Message:Send>>> {
 		let (send, recv) = channel();
-		self.deliver(UserMessage(msg, Agent::new(send,
-																						 NO_ADDRESS.to_string(),
-																						 NO_ADDRESS.to_string())));
+		self.deliver(UserMessage(msg.clone_me(), Agent::new(send,
+																												NO_ADDRESS.to_string(),
+																												NO_ADDRESS.to_string())));
 		Future::from_fn(proc() {
 			match recv.recv() {
-				UserMessage(msg, _) => Ok(msg),
-				Failure(err, _) => Err(Some(err)),
-				_ => Err(None)
+				UserMessage(msg, _) => Some(msg),
+				Failure(err, _) => Some(msg),
+				_ => None
 			}
 		})
 	}

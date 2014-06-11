@@ -1,22 +1,42 @@
-#![crate_type = "lib"]
-#![crate_id = "cage#0.1"]
-#![feature(macro_rules)]                                                                                               
-extern crate sync;
+use std::any::Any;
+use std::any::AnyRefExt;
+use std::intrinsics::TypeId;
+use std::mem::transmute;
+use std::mem::transmute_copy;
+use std::raw::TraitObject;
 
 use actor_agent::Agent;
 use actor_context::Context;
 
-pub mod actor_agent;
-pub mod actor_context;
-pub mod actor_stage;
-pub mod match_any;
-mod cage_message;
-
-pub trait Message : Send + Clone {
+pub trait Message : Send + Clone + Any {
+	// A work around suggested by Huon to enable cloning of trait objects
 	fn clone_me(&self) -> Box<Message:Send> {
 		box self.clone() as Box<Message:Send>
 	}
 }
+
+// copied from std::any, like Chris Morgan's HTTP headers in Teepee
+impl<'a> AnyRefExt<'a> for &'a Message {
+	#[inline]
+	fn is<T: 'static>(self) -> bool {
+		let t = TypeId::of::<T>();
+		let boxed = self.get_type_id();
+		t == boxed
+	}
+
+	#[inline]
+	fn as_ref<T: 'static>(self) -> Option<&'a T> {
+		if self.is::<T>() {
+			unsafe {
+				let to: TraitObject = transmute_copy(&self);
+				Some(transmute(to.data))
+			}
+		} else {
+			None
+		}
+	}
+}
+
 
 pub trait Actor {
 	// Requires that the Actor be constructed in such a way that
@@ -26,8 +46,8 @@ pub trait Actor {
 	/*
 	 * The main function.
 	 */
-	fn receive(&self,
-						 context: &Context,
+	fn receive(&mut self,
+						 context: &mut Context,
 						 msg: Box<Message>,
 						 sender: Agent);
 	
@@ -37,19 +57,19 @@ pub trait Actor {
 
 	// Called when another Actor dies, if this Actor was watching for the
 	// other's death.
-	fn terminated(&self,
-								context: &Context,
+	fn terminated(&mut self,
+								context: &mut Context,
 								terminated: Agent) {}
 	
 	// Called if a message sent by this Actor causes failure in another.
-	fn failed(&self,
-						context: &Context,
+	fn failed(&mut self,
+						context: &mut Context,
 						err: Box<Message>,
 						failed: Agent) {}
 
 	// Called if a message sent by this Actor cannot be delivered.
-	fn undelivered(&self,
-								 context: &Context,
+	fn undelivered(&mut self,
+								 context: &mut Context,
 								 target: Agent,
 								 orig_msg: Box<Message>) {}
 
@@ -58,16 +78,16 @@ pub trait Actor {
 	 */
 
 	// Called before this Actor starts receiving messages.
-	fn pre_start(&self) {}
+	fn pre_start(&mut self) {}
 
 	// Actors are responsible for recovery from their own errors.
 	
 	// Called just after an actor is killed, with the ability to
 	// reply to the killer.
-	fn killed(&self,
-						context: &Context,
+	fn killed(&mut self,
+						context: &mut Context,
 						killer: Agent) {}
 	
 	// Called after this Actor permanently ceases receiving messages.
-	fn post_stop(&self) {}
+	fn post_stop(&mut self) {}
 }
