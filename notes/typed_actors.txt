@@ -1,0 +1,20 @@
+Akka style Typed Actors
+	basically receivers of a library dispatch
+Could library macro so that messages are matched on automatically
+	dispatch to a method with the same name as the Message type
+
+No need for Contexts or Stage (forget parent/children)
+	message formatting can go into Agents
+	
+Can still use Futures for getting results.
+
+Also could make a macro for "!" syntax
+	agent ! msg
+	results in agent.deliver(context.send(msg))
+		implicitly calls context.send(msg)
+		would require argument names to be mandated
+		
+Actors should be constructed as in Cage
+	however, should receive &context so they can 
+
+

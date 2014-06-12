@@ -9,29 +9,44 @@ use cage::actor_agent::Agent;
 use cage::actor_context::Context;
 use cage::actor_stage::Stage;
 
-use std::any::AnyRefExt;
 use std::rand;
 use std::rand::Rng;
 
+/*
+ * Required for runtime reflection.
+ */
+use std::any::AnyRefExt;
 #[macro_escape] mod match_any;
 
+/*
+ * Message types.
+ */
 #[deriving(Clone)]
 struct FireSeason;
+impl Message for FireSeason {}
 
 #[deriving(Clone)]
 struct Fire;
-
-impl Message for FireSeason {}
 impl Message for Fire {}
 
+/*
+ * Actor types.
+ */
+
+// the Forest Actor
+static LOWER_TREE_BOUND: int = 100;
+static UPPER_TREE_BOUND: int = 300;
 struct Forest {
   trees: int
 }
 
 impl Actor for Forest {
+  // Self-contained initialization.
   fn new() -> Forest {
-    Forest { trees: rand::task_rng().gen_range(100, 300) }
+    Forest { trees: rand::task_rng().gen_range(LOWER_TREE_BOUND, UPPER_TREE_BOUND) }
   }
+
+  // Uses the macro to dispatch based on msg.
   fn receive(&mut self,
              context: &mut Context,
              msg: Box<Message>,
@@ -47,6 +62,8 @@ impl Actor for Forest {
       else { () }
     };
   }
+
+  // Run before the Actor receives messages to spawn new Actors.
   fn pre_start(&mut self, context: &mut Context) {
     for _ in range(0, self.trees) {
       context.start_child::<Fir>();
@@ -54,6 +71,7 @@ impl Actor for Forest {
   }
 }
 
+// the Fir Actor.
 struct Fir {
   on_fire: bool
 }
@@ -78,16 +96,25 @@ impl Actor for Fir {
     
     if self.on_fire {
       println!("FIRE");
+      // Message broadcasting.
       context.find("../*".to_string(), box Fire);
     }
   }
 }
 
+/*
+ * Top-level code.
+ */
 fn main() {
+  // Starting the Stage and an Actor on it.
   let mut stage = Stage::new();
   let forest = stage.start::<Forest>();
+
+  // Sending a request to an Actor for a result.
   let smokey = box FireSeason;
   let arsonist = forest.request(smokey);
+
+  // Unpacking the response.
   arsonist.unwrap();
   println!("only you can prevent forest fires");
 }
