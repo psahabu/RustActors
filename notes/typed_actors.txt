@@ -1,20 +1,40 @@
+LibMessage:
+	Message<Any:Send>
+	Undelivered
+	(Failure)
+	Watch
+	Unwatch
+	(Kill can be done with drop(_))
+
 Akka style Typed Actors
 	basically receivers of a library dispatch
-Could library macro so that messages are matched on automatically
-	dispatch to a method with the same name as the Message type
+	library macro so that messages are matched on automatically
+		dispatch to a method with the same name as the Message type
+			error: method unimplemented
+		also a _ pattern (should *never happen*) because Message(Box<Any:Send>)
+	must define an enum of acceptable messages
+	enforces safety on receiver end, sender end relatively trivial
+		is message type in the enum?
 
 No need for Contexts or Stage (forget parent/children)
 	message formatting can go into Agents
+	starting an actor can go into Actor as a static
 	
 Can still use Futures for getting results.
 
-Also could make a macro for "!" syntax
-	agent ! msg
+Also could make a macro for sending syntax
+	agent(msg[sender])
 	results in agent.deliver(context.send(msg))
 		implicitly calls context.send(msg)
-		would require argument names to be mandated
 		
 Actors should be constructed as in Cage
-	however, should receive &context so they can 
+	constructed in the thread
+	can then immediately be sent an "initializing" message
+		suggested pattern, not enforced due to dispatch macro
 
-
+Need to determine when all references to an Actor are gone
+	actually straight recv is fine
+		when all Senders hang up, failure is triggered, automatic clean up
+		still need to drain receiver on Kill/Suicide
+	send will have to be protected
+		don't want failure propagation
